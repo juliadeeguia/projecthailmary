@@ -122,9 +122,35 @@ button:disabled {opacity:.45;cursor:not-allowed}
   .game-layout {grid-template-columns:1fr}
   .plot {min-height:45px}
 }
+
+[hidden] {display:none !important}
+.title-screen {min-height:100svh;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:32px;padding:clamp(20px,5vw,80px);max-width:1500px;margin:auto}
+.title-copy h1 {font-size:clamp(36px,5vw,74px);line-height:1.08;letter-spacing:.04em;margin:20px 0}
+.eyebrow {color:#8ce9f4;letter-spacing:.2em;font-size:12px}
+.title-copy p {line-height:1.8;color:#bdcce1;max-width:38ch}
+.title-art {width:100%;image-rendering:pixelated;border:3px solid #455775;box-shadow:12px 12px 0 #14233d}
+.start-button {background:#ff985f;color:#101b2c;border-color:#ffc799;padding:16px 28px;font-weight:bold;margin:20px 0 8px}
+.start-button:hover {background:#ffc799}
+.key-hint {font-size:12px;letter-spacing:.12em}
+.scene-caption {font-size:12px;color:#bdcce1;line-height:1.6}
+button:focus-visible {outline:3px solid #ff985f;outline-offset:4px}
+@media(max-width:750px) {.title-screen {grid-template-columns:1fr;gap:20px}.title-art {max-height:50svh;object-fit:contain;background:#626464}.title-copy h1 {font-size:38px}.title-copy {text-align:center}.title-copy p {margin:12px auto}}
+@media(prefers-reduced-motion:reduce) {* {animation:none !important}}
 </style>
 </head>
 <body>
+<section id="title-screen" class="title-screen" aria-labelledby="title-heading">
+ <div class="title-copy">
+  <span class="eyebrow">LUNAR COLONY SURVIVAL / 01</span>
+  <h1 id="title-heading">PROJECT<br>HAIL MARY</h1>
+  <p>Your outpost. Your crew. One chance to build a future on the Moon.</p>
+  <button id="start-game" class="start-button" type="button">START MISSION ▶</button>
+  <p class="key-hint">PRESS ANY KEY TO START</p>
+  <p class="scene-caption">Continue your saved mission, or begin your first lunar day.</p>
+ </div>
+ <img class="title-art" src="assets/moon-base.png" alt="Pixel-art lunar base with orange habitats and craters on the Moon" fetchpriority="high">
+</section>
+<div id="game-screen" hidden>
 <header>
 <h1>🚀 PROJECT HAIL MARY</h1>
 <p>8-BIT LUNAR COLONY SURVIVAL</p>
@@ -140,13 +166,13 @@ button:disabled {opacity:.45;cursor:not-allowed}
 <div class="game-layout">
 <div>
 <section class="panel">
-<h2>🌕 LUNAR BASE ALPHA</h2>
+<h2 id="game-heading" tabindex="-1">🌕 LUNAR BASE ALPHA</h2>
 <div class="scene">
-  <img src="assets/moon-base.png" alt="Pixel-art lunar colony">
-  <div class="crew" aria-label="Astronaut"></div>
-  <div class="crew second" aria-label="Astronaut"></div>
+  <img src="assets/game-scene.png" alt="Lunar mission scene with connected habitats, greenhouses, solar arrays and an astronaut">
+
 </div>
 <p>Mission crew: 2 astronauts</p>
+<p class="scene-caption">Scene artwork includes a fixed illustrated HUD. Live mission values appear in Mission Resources above.</p>
 </section>
 
 <section class="panel">
@@ -183,8 +209,21 @@ button:disabled {opacity:.45;cursor:not-allowed}
 </div>
 </div>
 </main>
+</div>
 
 <script>
+function startMission(event) {
+ if (event && event.type === "keydown" && (event.repeat || event.ctrlKey || event.metaKey || event.altKey || ["Shift", "Control", "Alt", "Meta", "Tab", "Escape", "CapsLock"].includes(event.key))) return;
+ if (event) event.preventDefault();
+ document.getElementById("title-screen").hidden = true;
+ document.getElementById("game-screen").hidden = false;
+ document.removeEventListener("keydown", startMission);
+ document.getElementById("game-heading").focus({preventScroll:true});
+ window.scrollTo(0, 0);
+}
+document.getElementById("start-game").addEventListener("click", startMission);
+document.addEventListener("keydown", startMission);
+
 const defs = {
  solar:{icon:"☀️",name:"Solar Array",cost:15,
         output:{power:12}},
