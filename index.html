@@ -1,0 +1,242 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Hail Mary</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: #eaf3ff;
+  background: #080e20;
+}
+header {
+  padding: 30px 20px;
+  text-align: center;
+  background: linear-gradient(120deg,#14254d,#351d45);
+}
+h1 { margin: 0; font-size: 36px; }
+.subtitle { color: #b8c7e4; }
+main { max-width: 1000px; margin: auto; padding: 20px; }
+.panel {
+  background: #15213a;
+  border: 1px solid #344563;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+  gap: 12px;
+}
+.stat {
+  padding: 15px;
+  background: #223453;
+  border-radius: 10px;
+  text-align: center;
+}
+.value { font-size: 27px; font-weight: bold; color: #68e8cf; }
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(190px,1fr));
+  gap: 16px;
+}
+label { display: block; margin-bottom: 8px; }
+input { width: 100%; accent-color: #65dfce; }
+button,select {
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 16px;
+}
+button {
+  background: #61ddc4;
+  color: #07182a;
+  font-weight: bold;
+  cursor: pointer;
+}
+button:hover { background: #8cf4df; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+select { background: #263b5c; color: white; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+#log { line-height: 1.7; color: #d2def1; }
+.warning { color: #ffae80; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🚀 PROJECT HAIL MARY</h1>
+  <p class="subtitle">Build a colony. Manage resources. Survive space.</p>
+</header>
+
+<main>
+<section class="panel">
+  <h2>Mission Control</h2>
+  <label for="planet">Select your destination</label>
+  <select id="planet" onchange="resetGame()">
+    <option value="moon">Moon</option>
+    <option value="mars">Mars</option>
+  </select>
+  <p id="mission"></p>
+  <h3 id="day">Mission Day 1</h3>
+</section>
+
+<section class="panel">
+  <h2>Colony Status</h2>
+  <div class="stats">
+    <div class="stat">Oxygen<div class="value" id="oxygen"></div></div>
+    <div class="stat">Power<div class="value" id="power"></div></div>
+    <div class="stat">Food<div class="value" id="food"></div></div>
+    <div class="stat">Shielding<div class="value" id="shield"></div></div>
+    <div class="stat">Crew Health<div class="value" id="health"></div></div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Allocate Your Resources</h2>
+  <p>You have 10 resource units to distribute each day.</p>
+  <p id="remaining">Remaining units: 10</p>
+  <div class="controls">
+    <div><label>Life Support: <span id="oLabel">2</span></label>
+      <input id="o" type="range" min="0" max="10" value="2"></div>
+    <div><label>Solar Power: <span id="pLabel">2</span></label>
+      <input id="p" type="range" min="0" max="10" value="2"></div>
+    <div><label>Food Production: <span id="fLabel">2</span></label>
+      <input id="f" type="range" min="0" max="10" value="2"></div>
+    <div><label>Radiation Shielding: <span id="sLabel">2</span></label>
+      <input id="s" type="range" min="0" max="10" value="2"></div>
+  </div>
+  <p id="allocationError" class="warning"></p>
+  <div class="actions">
+    <button id="advance" onclick="nextDay()">Advance One Day</button>
+    <button onclick="resetGame()">Restart Mission</button>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Mission Log</h2>
+  <div id="log" aria-live="polite"></div>
+</section>
+</main>
+
+<script>
+const ids = ["o","p","f","s"];
+const sliders = ids.map(id => document.getElementById(id));
+let state;
+
+function clamp(n) {
+  return Math.max(0, Math.min(100, n));
+}
+
+function resetGame() {
+  state = {
+    day: 1,
+    oxygen: 80,
+    power: 80,
+    food: 80,
+    shield: 80,
+    health: 100,
+    finished: false
+  };
+  sliders.forEach(slider => slider.value = 2);
+  document.getElementById("log").innerHTML =
+    "<p>Mission started. Your crew is counting on you.</p>";
+  document.getElementById("advance").disabled = false;
+  update();
+}
+
+function update() {
+  const planet = document.getElementById("planet").value;
+  document.getElementById("mission").textContent =
+    planet === "mars"
+    ? "Mars: Dust storms reduce solar energy. Radiation is dangerous."
+    : "Moon: Long nights and limited supplies challenge your base.";
+
+  document.getElementById("day").textContent =
+    "Mission Day " + state.day;
+
+  ["oxygen","power","food","shield","health"].forEach(key => {
+    document.getElementById(key).textContent =
+      Math.round(state[key]) + "%";
+  });
+
+  let total = 0;
+  sliders.forEach(slider => {
+    const value = Number(slider.value);
+    total += value;
+    document.getElementById(slider.id+"Label").textContent = value;
+  });
+
+  document.getElementById("remaining").textContent =
+    "Remaining units: " + (10-total);
+
+  document.getElementById("allocationError").textContent =
+    total > 10 ? "Too many units allocated!" : "";
+
+  document.getElementById("advance").disabled =
+    total > 10 || state.finished;
+}
+
+function nextDay() {
+  if (state.finished) return;
+  const allocations = sliders.map(s => Number(s.value));
+  if (allocations.reduce((a,b) => a+b,0) > 10) return;
+
+  const [o,p,f,s] = allocations;
+  const mars = document.getElementById("planet").value === "mars";
+
+  const storm = Math.random() < (mars ? 0.28 : 0.16);
+  const radiation = Math.random() < (mars ? 0.25 : 0.18);
+
+  state.oxygen = clamp(state.oxygen + o*4 - 11);
+  state.power = clamp(state.power + p*5 - 12 - (storm ? 12 : 0));
+  state.food = clamp(state.food + f*4 - 10);
+  state.shield = clamp(state.shield + s*4 - 9);
+
+  let damage = 0;
+  if (state.oxygen < 25) damage += 20;
+  if (state.food < 20) damage += 15;
+  if (state.power < 15) damage += 10;
+  if (radiation) damage += Math.max(0, 25-state.shield/3);
+
+  state.health = clamp(state.health-damage+
+    (damage === 0 ? 3 : 0));
+
+  let events = [];
+  if (storm) events.push("Dust or debris disrupted solar power.");
+  if (radiation) events.push("Radiation exposure threatened the crew.");
+  if (!events.length) events.push("No major incidents today.");
+
+  state.day++;
+
+  let message = "<p><strong>Day "+state.day+
+    ":</strong> "+events.join(" ")+"</p>";
+
+  if (state.health <= 0 || state.oxygen <= 0 ||
+      state.food <= 0 || state.power <= 0) {
+    state.finished = true;
+    message += "<p class='warning'>MISSION FAILED: " +
+      "Critical resources or crew health depleted.</p>";
+  } else if (state.day >= 31) {
+    state.finished = true;
+    message += "<p>🏆 MISSION SUCCESS! " +
+      "Your colony survived 30 days!</p>";
+  }
+
+  document.getElementById("log").innerHTML =
+    message + document.getElementById("log").innerHTML;
+
+  update();
+}
+
+sliders.forEach(slider =>
+  slider.addEventListener("input", update)
+);
+resetGame();
+</script>
+</body>
+</html>
