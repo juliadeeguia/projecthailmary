@@ -4,239 +4,531 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Project Hail Mary</title>
+<title>Project Hail Mary | Lunar Mission</title>
 <style>
-* { box-sizing: border-box; }
+:root {
+  --bg:#090f20;
+  --panel:#17243b;
+  --line:#405473;
+  --text:#e8f3ff;
+  --mint:#7ef0c2;
+  --gold:#ffd477;
+}
+* { box-sizing:border-box; }
 body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  color: #eaf3ff;
-  background: #080e20;
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:monospace;
 }
 header {
-  padding: 30px 20px;
-  text-align: center;
-  background: linear-gradient(120deg,#14254d,#351d45);
+  text-align:center;
+  padding:22px;
+  background:#14223b;
+  border-bottom:3px solid var(--mint);
 }
-h1 { margin: 0; font-size: 36px; }
-.subtitle { color: #b8c7e4; }
-main { max-width: 1000px; margin: auto; padding: 20px; }
-.panel {
-  background: #15213a;
-  border: 1px solid #344563;
-  border-radius: 14px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-.stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
-  gap: 12px;
-}
-.stat {
-  padding: 15px;
-  background: #223453;
-  border-radius: 10px;
-  text-align: center;
-}
-.value { font-size: 27px; font-weight: bold; color: #68e8cf; }
-.controls {
-  display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(190px,1fr));
-  gap: 16px;
-}
-label { display: block; margin-bottom: 8px; }
-input { width: 100%; accent-color: #65dfce; }
-button,select {
-  padding: 12px 18px;
-  border: 0;
-  border-radius: 8px;
-  font-size: 16px;
-}
+h1 { color:var(--mint); margin:0; font-size:28px; }
+h2 { font-size:17px; color:var(--gold); }
 button {
-  background: #61ddc4;
-  color: #07182a;
-  font-weight: bold;
-  cursor: pointer;
+  font-family:inherit;
+  cursor:pointer;
+  padding:10px;
+  border:2px solid #6c89aa;
+  border-radius:4px;
+  background:#293d5c;
+  color:white;
 }
-button:hover { background: #8cf4df; }
-button:disabled { opacity: .5; cursor: not-allowed; }
-select { background: #263b5c; color: white; }
-.actions { display: flex; gap: 10px; flex-wrap: wrap; }
-#log { line-height: 1.7; color: #d2def1; }
-.warning { color: #ffae80; }
+button:hover { background:#3c587d; }
+button:disabled { opacity:.4; cursor:not-allowed; }
+button.selected { border-color:var(--mint); background:#245a54; }
+main { max-width:1250px; margin:auto; padding:15px; }
+.panel {
+  background:var(--panel);
+  border:2px solid var(--line);
+  padding:15px;
+  margin-bottom:14px;
+  border-radius:5px;
+}
+.resources {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
+  gap:8px;
+}
+.resource {
+  text-align:center;
+  background:#253653;
+  padding:12px 5px;
+  border:1px solid #415779;
+}
+.resource strong { display:block; font-size:21px; color:var(--mint); }
+.layout {
+  display:grid;
+  grid-template-columns:minmax(0,2fr) minmax(260px,1fr);
+  gap:14px;
+}
+#map {
+  display:grid;
+  grid-template-columns:repeat(10,minmax(0,1fr));
+  gap:3px;
+  background:#101827;
+  padding:8px;
+}
+.tile {
+  position:relative;
+  aspect-ratio:1;
+  min-width:0;
+  padding:0;
+  border:1px solid #657085;
+  background:#4b5266;
+  font-size:clamp(12px,2.3vw,28px);
+  image-rendering:pixelated;
+  overflow:hidden;
+}
+.tile:nth-child(3n) { background:#53596c; }
+.tile:nth-child(7n) { background:#424b60; }
+.tile:hover { border-color:var(--mint); }
+.tile .astronaut {
+  position:absolute;
+  right:0;
+  bottom:0;
+  font-size:16px;
+  animation:bob 1s steps(2) infinite;
+}
+@keyframes bob {
+  50% { transform:translateY(-3px); }
+}
+.controls {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.controls button { text-align:left; font-size:12px; }
+small { color:#c4d0e5; }
+.mission {
+  margin:8px 0;
+  padding:9px;
+  background:#253653;
+  border-left:4px solid var(--gold);
+}
+.done { border-color:var(--mint); color:var(--mint); }
+#log { max-height:160px; overflow:auto; line-height:1.6; }
+.actions { display:flex; flex-wrap:wrap; gap:8px; }
+#status { color:var(--gold); min-height:20px; }
+@media(max-width:780px) {
+  .layout { grid-template-columns:1fr; }
+  .tile { font-size:18px; }
+}
 </style>
 </head>
 <body>
 <header>
   <h1>🚀 PROJECT HAIL MARY</h1>
-  <p class="subtitle">Build a colony. Manage resources. Survive space.</p>
+  <p>8-BIT LUNAR SURVIVAL SIMULATOR</p>
+  <div id="day">LUNAR DAY 1</div>
 </header>
 
 <main>
 <section class="panel">
-  <h2>Mission Control</h2>
-  <label for="planet">Select your destination</label>
-  <select id="planet" onchange="resetGame()">
-    <option value="moon">Moon</option>
-    <option value="mars">Mars</option>
-  </select>
-  <p id="mission"></p>
-  <h3 id="day">Mission Day 1</h3>
+  <h2>MISSION RESOURCES</h2>
+  <div id="resources" class="resources"></div>
 </section>
 
-<section class="panel">
-  <h2>Colony Status</h2>
-  <div class="stats">
-    <div class="stat">Oxygen<div class="value" id="oxygen"></div></div>
-    <div class="stat">Power<div class="value" id="power"></div></div>
-    <div class="stat">Food<div class="value" id="food"></div></div>
-    <div class="stat">Shielding<div class="value" id="shield"></div></div>
-    <div class="stat">Crew Health<div class="value" id="health"></div></div>
+<div class="layout">
+  <section class="panel">
+    <h2>🌕 LUNAR BASE ALPHA</h2>
+    <p>Select a building, then click an empty tile.</p>
+    <div id="map" aria-label="Lunar base building grid"></div>
+    <p id="status" aria-live="polite"></p>
+    <div class="actions">
+      <button onclick="nextDay()">▶ ADVANCE DAY</button>
+      <button onclick="saveGame()">💾 SAVE</button>
+      <button onclick="resetGame()">↻ NEW GAME</button>
+    </div>
+  </section>
+
+  <div>
+    <section class="panel">
+      <h2>🏗 BUILD FACILITIES</h2>
+      <div id="buildings" class="controls"></div>
+    </section>
+
+    <section class="panel">
+      <h2>🔬 TECHNOLOGY UPGRADES</h2>
+      <div id="upgrades"></div>
+    </section>
+
+    <section class="panel">
+      <h2>🎯 MISSION OBJECTIVES</h2>
+      <div id="missions"></div>
+    </section>
   </div>
-</section>
+</div>
 
 <section class="panel">
-  <h2>Allocate Your Resources</h2>
-  <p>You have 10 resource units to distribute each day.</p>
-  <p id="remaining">Remaining units: 10</p>
-  <div class="controls">
-    <div><label>Life Support: <span id="oLabel">2</span></label>
-      <input id="o" type="range" min="0" max="10" value="2"></div>
-    <div><label>Solar Power: <span id="pLabel">2</span></label>
-      <input id="p" type="range" min="0" max="10" value="2"></div>
-    <div><label>Food Production: <span id="fLabel">2</span></label>
-      <input id="f" type="range" min="0" max="10" value="2"></div>
-    <div><label>Radiation Shielding: <span id="sLabel">2</span></label>
-      <input id="s" type="range" min="0" max="10" value="2"></div>
-  </div>
-  <p id="allocationError" class="warning"></p>
-  <div class="actions">
-    <button id="advance" onclick="nextDay()">Advance One Day</button>
-    <button onclick="resetGame()">Restart Mission</button>
-  </div>
-</section>
-
-<section class="panel">
-  <h2>Mission Log</h2>
+  <h2>📡 MISSION CONTROL LOG</h2>
   <div id="log" aria-live="polite"></div>
 </section>
 </main>
 
 <script>
-const ids = ["o","p","f","s"];
-const sliders = ids.map(id => document.getElementById(id));
-let state;
+const BUILDINGS = {
+  solar: {
+    name:"Solar Array", icon:"☀️",
+    cost:{minerals:15},
+    daily:{power:12}
+  },
+  oxygen: {
+    name:"Oxygen Plant", icon:"💨",
+    cost:{minerals:20,power:10},
+    daily:{oxygen:12,power:-4}
+  },
+  farm: {
+    name:"Greenhouse", icon:"🌱",
+    cost:{minerals:25,water:10},
+    daily:{food:9,water:-3,power:-3}
+  },
+  water: {
+    name:"Ice Extractor", icon:"💧",
+    cost:{minerals:20,power:10},
+    daily:{water:10,power:-4}
+  },
+  mine: {
+    name:"Mineral Mine", icon:"⛏️",
+    cost:{minerals:10},
+    daily:{minerals:9,power:-3}
+  },
+  habitat: {
+    name:"Habitat", icon:"🏠",
+    cost:{minerals:30,oxygen:10},
+    daily:{power:-3},
+    healthBonus:4
+  },
+  lab: {
+    name:"Research Lab", icon:"🔬",
+    cost:{minerals:40,power:15},
+    daily:{research:7,power:-5}
+  },
+  shield: {
+    name:"Radiation Shield", icon:"🛡️",
+    cost:{minerals:35,power:10},
+    daily:{power:-4}
+  }
+};
 
-function clamp(n) {
-  return Math.max(0, Math.min(100, n));
-}
+const UPGRADES = {
+  solar: {
+    name:"Efficient Solar Cells",
+    cost:20,
+    description:"Solar output +50%"
+  },
+  recycling: {
+    name:"Oxygen Recycling",
+    cost:25,
+    description:"Reduce daily oxygen use"
+  },
+  farming: {
+    name:"Hydroponics",
+    cost:30,
+    description:"Greenhouse food output +50%"
+  },
+  shielding: {
+    name:"Advanced Shielding",
+    cost:35,
+    description:"Reduce radiation damage"
+  }
+};
 
-function resetGame() {
-  state = {
-    day: 1,
-    oxygen: 80,
-    power: 80,
-    food: 80,
-    shield: 80,
-    health: 100,
-    finished: false
+const RESOURCE_NAMES = {
+  oxygen:"🫧 Oxygen",
+  power:"⚡ Power",
+  food:"🥔 Food",
+  water:"💧 Water",
+  minerals:"🪨 Minerals",
+  research:"🔬 Research",
+  health:"❤️ Health"
+};
+
+let game;
+let selected = "solar";
+
+function newState() {
+  const map = Array(60).fill(null);
+  map[24] = "habitat";
+  map[25] = "solar";
+  return {
+    day:1,
+    map,
+    resources:{
+      oxygen:85,power:85,food:85,
+      water:85,minerals:100,
+      research:0,health:100
+    },
+    upgrades:[],
+    finished:false,
+    log:["Mission initiated. Lunar Base Alpha is operational."]
   };
-  sliders.forEach(slider => slider.value = 2);
-  document.getElementById("log").innerHTML =
-    "<p>Mission started. Your crew is counting on you.</p>";
-  document.getElementById("advance").disabled = false;
-  update();
 }
 
-function update() {
-  const planet = document.getElementById("planet").value;
-  document.getElementById("mission").textContent =
-    planet === "mars"
-    ? "Mars: Dust storms reduce solar energy. Radiation is dangerous."
-    : "Moon: Long nights and limited supplies challenge your base.";
+function count(type) {
+  return game.map.filter(x=>x===type).length;
+}
 
-  document.getElementById("day").textContent =
-    "Mission Day " + state.day;
+function hasResources(cost) {
+  return Object.entries(cost).every(
+    ([key,value])=>game.resources[key]>=value
+  );
+}
 
-  ["oxygen","power","food","shield","health"].forEach(key => {
-    document.getElementById(key).textContent =
-      Math.round(state[key]) + "%";
-  });
+function spend(cost) {
+  for(const [key,value] of Object.entries(cost)) {
+    game.resources[key]-=value;
+  }
+}
 
-  let total = 0;
-  sliders.forEach(slider => {
-    const value = Number(slider.value);
-    total += value;
-    document.getElementById(slider.id+"Label").textContent = value;
-  });
+function addLog(message) {
+  game.log.unshift("Day "+game.day+": "+message);
+  game.log=game.log.slice(0,25);
+}
 
-  document.getElementById("remaining").textContent =
-    "Remaining units: " + (10-total);
+function status(message) {
+  document.getElementById("status").textContent=message;
+}
 
-  document.getElementById("allocationError").textContent =
-    total > 10 ? "Too many units allocated!" : "";
+function placeBuilding(index) {
+  if(game.finished) return;
+  if(game.map[index]) {
+    status("This tile is already occupied.");
+    return;
+  }
+  const building=BUILDINGS[selected];
+  if(!hasResources(building.cost)) {
+    status("Not enough resources to construct "+building.name);
+    return;
+  }
+  spend(building.cost);
+  game.map[index]=selected;
+  addLog(building.name+" constructed.");
+  status("Construction complete!");
+  render();
+  saveGame(false);
+}
 
-  document.getElementById("advance").disabled =
-    total > 10 || state.finished;
+function buyUpgrade(key) {
+  if(game.finished || game.upgrades.includes(key)) return;
+  const upgrade=UPGRADES[key];
+  if(game.resources.research<upgrade.cost) {
+    status("Not enough research points.");
+    return;
+  }
+  game.resources.research-=upgrade.cost;
+  game.upgrades.push(key);
+  addLog("Technology unlocked: "+upgrade.name);
+  render();
+  saveGame(false);
 }
 
 function nextDay() {
-  if (state.finished) return;
-  const allocations = sliders.map(s => Number(s.value));
-  if (allocations.reduce((a,b) => a+b,0) > 10) return;
+  if(game.finished) return;
 
-  const [o,p,f,s] = allocations;
-  const mars = document.getElementById("planet").value === "mars";
+  const r=game.resources;
+  const daily={
+    oxygen:-10,power:-8,food:-8,
+    water:-7,minerals:0,research:0
+  };
 
-  const storm = Math.random() < (mars ? 0.28 : 0.16);
-  const radiation = Math.random() < (mars ? 0.25 : 0.18);
+  if(game.upgrades.includes("recycling")) daily.oxygen+=4;
 
-  state.oxygen = clamp(state.oxygen + o*4 - 11);
-  state.power = clamp(state.power + p*5 - 12 - (storm ? 12 : 0));
-  state.food = clamp(state.food + f*4 - 10);
-  state.shield = clamp(state.shield + s*4 - 9);
-
-  let damage = 0;
-  if (state.oxygen < 25) damage += 20;
-  if (state.food < 20) damage += 15;
-  if (state.power < 15) damage += 10;
-  if (radiation) damage += Math.max(0, 25-state.shield/3);
-
-  state.health = clamp(state.health-damage+
-    (damage === 0 ? 3 : 0));
-
-  let events = [];
-  if (storm) events.push("Dust or debris disrupted solar power.");
-  if (radiation) events.push("Radiation exposure threatened the crew.");
-  if (!events.length) events.push("No major incidents today.");
-
-  state.day++;
-
-  let message = "<p><strong>Day "+state.day+
-    ":</strong> "+events.join(" ")+"</p>";
-
-  if (state.health <= 0 || state.oxygen <= 0 ||
-      state.food <= 0 || state.power <= 0) {
-    state.finished = true;
-    message += "<p class='warning'>MISSION FAILED: " +
-      "Critical resources or crew health depleted.</p>";
-  } else if (state.day >= 31) {
-    state.finished = true;
-    message += "<p>🏆 MISSION SUCCESS! " +
-      "Your colony survived 30 days!</p>";
+  for(const type of game.map) {
+    if(!type) continue;
+    for(const [key,value] of Object.entries(BUILDINGS[type].daily)) {
+      let amount=value;
+      if(type==="solar" && key==="power" &&
+         game.upgrades.includes("solar")) amount*=1.5;
+      if(type==="farm" && key==="food" &&
+         game.upgrades.includes("farming")) amount*=1.5;
+      daily[key]+=amount;
+    }
   }
 
-  document.getElementById("log").innerHTML =
-    message + document.getElementById("log").innerHTML;
+  // Production is limited by available power.
+  const powerFactor=r.power<=0 ? 0.3 : 1;
+  for(const [key,value] of Object.entries(daily)) {
+    const amount=key!=="power" && value>0
+      ? value*powerFactor : value;
+    r[key]=Math.max(0,Math.min(999,r[key]+amount));
+  }
 
-  update();
+  let damage=0;
+  if(r.oxygen<20) damage+=15;
+  if(r.food<20) damage+=12;
+  if(r.water<20) damage+=12;
+  if(r.power<10) damage+=8;
+
+  const storm=Math.random()<0.18;
+  if(storm) {
+    const protection=count("shield")*12+
+      (game.upgrades.includes("shielding")?15:0);
+    const radiationDamage=Math.max(0,24-protection);
+    damage+=radiationDamage;
+    addLog("Solar radiation storm! Crew exposure: "+
+      radiationDamage);
+  }
+
+  if(damage===0) {
+    r.health=Math.min(100,r.health+2+
+      count("habitat")*2);
+  } else {
+    r.health=Math.max(0,r.health-damage);
+    addLog("Crew health decreased by "+damage);
+  }
+
+  game.day++;
+  addLog("Daily production cycle completed.");
+
+  if(r.health<=0) {
+    game.finished=true;
+    addLog("MISSION FAILED: Crew health reached zero.");
+  } else if(game.day>=31 && r.health>0) {
+    game.finished=true;
+    addLog("MISSION SUCCESS! Colony survived 30 days.");
+  }
+
+  render();
+  saveGame(false);
 }
 
-sliders.forEach(slider =>
-  slider.addEventListener("input", update)
-);
-resetGame();
+function missions() {
+  return [
+    {
+      name:"First Steps",
+      done:count("solar")>=1 && count("habitat")>=1
+    },
+    {
+      name:"Sustainable Food",
+      done:count("farm")>=2
+    },
+    {
+      name:"Scientific Discovery",
+      done:count("lab")>=1
+    },
+    {
+      name:"Radiation Defense",
+      done:count("shield")>=1
+    },
+    {
+      name:"Ten-Day Survival",
+      done:game.day>=11 && game.resources.health>0
+    },
+    {
+      name:"Permanent Outpost",
+      done:game.day>=31 && game.resources.health>0
+    }
+  ];
+}
+
+function render() {
+  document.getElementById("day").textContent=
+    "LUNAR DAY "+game.day;
+
+  document.getElementById("resources").innerHTML=
+    Object.entries(RESOURCE_NAMES).map(([key,name])=>
+      '<div class="resource">'+name+
+      '<strong>'+Math.floor(game.resources[key])+
+      '</strong></div>'
+    ).join("");
+
+  const map=document.getElementById("map");
+  map.innerHTML="";
+  game.map.forEach((type,index)=>{
+    const tile=document.createElement("button");
+    tile.className="tile";
+    tile.title=type?BUILDINGS[type].name:"Empty lunar terrain";
+    tile.setAttribute("aria-label",tile.title);
+    tile.textContent=type?BUILDINGS[type].icon:"·";
+
+    // Two animated crew sprites near the original habitat.
+    if(index===34 || index===35) {
+      const crew=document.createElement("span");
+      crew.className="astronaut";
+      crew.textContent="👨‍🚀";
+      tile.appendChild(crew);
+    }
+    tile.onclick=()=>placeBuilding(index);
+    map.appendChild(tile);
+  });
+
+  document.getElementById("buildings").innerHTML=
+    Object.entries(BUILDINGS).map(([key,b])=>{
+      const cost=Object.entries(b.cost)
+        .map(([resource,n])=>n+" "+resource).join(", ");
+      return '<button class="'+(selected===key?"selected":"")+
+        '" onclick="selectBuilding(\''+key+'\')">'+
+        b.icon+" "+b.name+"<br><small>"+cost+"</small></button>";
+    }).join("");
+
+  document.getElementById("upgrades").innerHTML=
+    Object.entries(UPGRADES).map(([key,u])=>
+      '<div class="mission"><strong>'+u.name+'</strong>'+
+      '<p>'+u.description+'</p>'+
+      '<button '+(game.upgrades.includes(key)?"disabled":"")+
+      ' onclick="buyUpgrade(\''+key+'\')">'+
+      (game.upgrades.includes(key)?"UNLOCKED":
+       "Research: "+u.cost)+"</button></div>"
+    ).join("");
+
+  document.getElementById("missions").innerHTML=
+    missions().map(m=>
+      '<div class="mission '+(m.done?"done":"")+'">'+
+      (m.done?"✓ ":"○ ")+m.name+"</div>"
+    ).join("");
+
+  document.getElementById("log").innerHTML=
+    game.log.map(line=>"<p>"+line+"</p>").join("");
+}
+
+function selectBuilding(key) {
+  selected=key;
+  status("Selected: "+BUILDINGS[key].name);
+  render();
+}
+
+function saveGame(notify=true) {
+  try {
+    localStorage.setItem("hailmary-save",JSON.stringify(game));
+    if(notify) status("Mission saved successfully.");
+  } catch(e) {
+    if(notify) status("Unable to save in this browser.");
+  }
+}
+
+function resetGame() {
+  if(game && !confirm("Start a new mission? Current progress will be lost.")) {
+    return;
+  }
+  game=newState();
+  selected="solar";
+  status("New lunar mission started.");
+  render();
+  saveGame(false);
+}
+
+function loadGame() {
+  try {
+    const saved=JSON.parse(localStorage.getItem("hailmary-save"));
+    if(saved && Array.isArray(saved.map) &&
+       saved.map.length===60 && saved.resources &&
+       Array.isArray(saved.upgrades) &&
+       Array.isArray(saved.log)) {
+      game=saved;
+      return;
+    }
+  } catch(e) {}
+  game=newState();
+}
+
+loadGame();
+render();
 </script>
 </body>
 </html>
+
